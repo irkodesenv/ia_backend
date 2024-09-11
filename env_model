@@ -1,0 +1,8 @@
+# Api OPEN IA
+API_OPENIA_IRKO="COLOQUE O CODIGO DA API"
+
+KEY_SEGURANCA_PROJETO_DJANGO = "coloque o codigo do seu projeto"
+
+DEBUG = True
+
+COOKIE_SECURE = False
