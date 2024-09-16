@@ -3,11 +3,13 @@ from .models import Agente, Instrucao, PermissaoAgenteEmpresa
 from .serializers import AgenteSerializer, InstrucaoSerializer, PermissaoAgenteEmpresaSerializer
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class AgenteViewSet(viewsets.ModelViewSet):
     queryset = Agente.objects.all()
     serializer_class = AgenteSerializer
+    parser_classes = [MultiPartParser, FormParser]
     
     @action(detail=True, methods=['get'])
     def instrucoes(self, request, pk=None):

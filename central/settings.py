@@ -89,6 +89,9 @@ USE_TZ = True
 
 STATIC_URL = 'templates/static/'
 
+MEDIA_ROOT = BASE_DIR / 'upload/media'
+MEDIA_URL = '/upload/media/'
+
 # Determina se o cookie CSRF deve ser enviado apenas por conexões HTTPS seguras
 CSRF_COOKIE_SECURE = config('COOKIE_SECURE', default=True, cast=bool)
 

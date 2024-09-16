@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Agente, Instrucao, PermissaoAgenteEmpresa
+import json
 
 
 class InstrucaoSerializer(serializers.ModelSerializer):
@@ -24,7 +25,8 @@ class PermissaoAgenteEmpresaSerializer(serializers.ModelSerializer):
 
 
 class AgenteSerializer(serializers.ModelSerializer):
-    instrucoes = InstrucaoSerializer(many=True)
+    instrucoes = InstrucaoSerializer(many=True, read_only=True)
+    instrucoes_data = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = Agente
@@ -32,23 +34,28 @@ class AgenteSerializer(serializers.ModelSerializer):
             'idmaster',
             'nome',
             'descritivo',
+            'logo_agente',
             'max_token',
             'created_at',
             'update_at',
-            'instrucoes'
+            'instrucoes',
+            'instrucoes_data'
         )
         extra_kwargs = {
             'idmaster': {'read_only': True}
         }
 
-    def create(self, validated_data):        
-        instrucoes_data = validated_data.pop('instrucoes', [])
+
+    def create(self, validated_data):
+        instrucoes_json = validated_data.pop('instrucoes_data', '[]')
+        instrucoes_data = json.loads(instrucoes_json)
         agente = Agente.objects.create(**validated_data)
-        
+
         for instrucao_data in instrucoes_data:
             Instrucao.objects.create(id_agente=agente, **instrucao_data)
-        
+
         return agente
+
     
     def update(self, instance, validated_data):
         instrucoes_data = validated_data.pop('instrucoes', [])
