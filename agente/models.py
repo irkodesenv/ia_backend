@@ -16,7 +16,7 @@ def agente_logo_path(instance, filename):
         Define o caminho de upload para o logo do agente.
         Formato: agente/<idmaster>/filename
     """
-    return f"agente/{instance.idmaster}/{filename}"
+    return f"agentes/{instance.idmaster}/{filename}"
 
 
 class Agente(models.Model):
@@ -43,9 +43,12 @@ class Instrucao(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-class ArquivoInstrucao(models.Model):
-    id_agente = models.ForeignKey(Agente, related_name='arquivos', on_delete=models.CASCADE)
+class baseConhecimento(models.Model):
+    id_agente = models.ForeignKey(Agente, related_name='base_conhecimento', on_delete=models.CASCADE)
     arquivo = models.FileField(upload_to=agente_base_conhecimento_path, blank=True, null=True)
+    
+    def __str__(self):
+        return str(self.id_agente)
 
 
 class PermissaoAgenteEmpresa(models.Model):

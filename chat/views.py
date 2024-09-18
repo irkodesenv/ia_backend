@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.response import Response
 from .models import Chat
 from .serializers import ChatSerializer
@@ -8,8 +7,10 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from django.db.models import OuterRef, Subquery
 import openai
-from agente.models import Agente, Instrucao
-from central.settings import API_OPENIA_KEY
+from agente.models import Agente, Instrucao, baseConhecimento
+from central.settings import API_OPENIA_KEY, MEDIA_ROOT
+from docx import Document
+import os
 
 openai.api_key = API_OPENIA_KEY
 
@@ -65,47 +66,97 @@ class ChatViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='enviarPergunta')
     def enviar_pergunta(self, request):
-        
         data = request.data
         data_id_agente = data.get('id_agente', '')
+        idmaster = data.get('idmaster')
         instancia_agente = get_object_or_404(Agente, idmaster = data_id_agente)
-        data.pop('id_agente', None)
+        data.pop('id_agente', None)        
+        arr_mensagens = []    
         
-        arr_mensagens = []     
-           
-        # Criar historico do usuario
+        # Busca base de conhecimento
+        base_conhecimento = self.obter_base_conhecimento_agente(data_id_agente)        
+        if base_conhecimento:
+            texto_base_conhecimento = self.extrair_texto_base_conhecimento(base_conhecimento)
+            texto_extraido = f'Arquivo: {os.path.basename(base_conhecimento.arquivo.name)} texto extraído do arquivo: {texto_base_conhecimento.replace('\n', '')}'     
+            self.alimenta_contexto(arr_mensagens, "system", texto_extraido)
+                 
+        # Alimenta base com pergunta do usuario
+        self.alimenta_pergunta_do_usuario(instancia_agente, **data)
+        
+        # Ultima instrucao
+        ultima_instrucao = self.obter_ultima_instrucao(instancia_agente)
+        if ultima_instrucao:
+            self.alimenta_contexto(arr_mensagens, "system", ultima_instrucao)
+            
+        # Monta contexto 
+        self.montar_contexto_para_envio(arr_mensagens, data_id_agente, idmaster)
+            
+        # Send
+        response = self.enviar_para_openai("gpt-4o-mini", arr_mensagens)
+        
+        self.alimenta_resposta_do_gpt(response, instancia_agente, **data)    
+
+        #Pular primeira linha, para nao enviar a instrucao do agente
+        return Response(arr_mensagens[1:])
+    
+    
+    def obter_base_conhecimento_agente(self, id_agente):
+        return baseConhecimento.objects.filter(id_agente = id_agente).first()
+    
+    
+    def extrair_texto_base_conhecimento(self, base_conhecimento):
+        path = f'{MEDIA_ROOT}/{base_conhecimento.arquivo}'
+            
+        doc = Document(path)
+        texto_extraido = '\n'.join([para.text for para in doc.paragraphs])
+        
+        return texto_extraido
+    
+
+    def alimenta_contexto(self, arr_mensagens, role, content):
+        arr_mensagens.append({
+            "role": role, 
+            "content": content               
+        })
+        
+        return arr_mensagens
+    
+    
+    def alimenta_pergunta_do_usuario(self, instancia_agente, **data):
         Chat.objects.create(id_agente=instancia_agente, **data)
         
+        
+    def alimenta_resposta_do_gpt(self, response, instancia_agente, **data):
+        # Criar historico do chat
+        data['autor'] = 1
+        data['mensagem'] = response.choices[0].message.content        
+        Chat.objects.create(id_agente=instancia_agente, **data)
+        
+        
+    def obter_ultima_instrucao(self, instancia_agente):
         ultima_instrucao = Instrucao.objects.filter(
             id_agente = instancia_agente
         ).order_by('-created_at').values('instrucao')[:1]
-            
-        if ultima_instrucao.exists():
-            instrucao = ultima_instrucao[0]['instrucao']               
-           
-            arr_mensagens.append({
-                "role": "system", 
-                "content": instrucao                
-            })
-            
-        # Recupera historico para montar contexto                
-        dados = Chat.objects.filter(id_usuario = 1, id_agente = data_id_agente, idmaster = data.get('idmaster'))
+        
+        return ultima_instrucao[0]['instrucao']
+    
+    
+    def montar_contexto_para_envio(self, arr_mensagens, id_agente, idmaster):       
+        dados = Chat.objects.filter(id_usuario = 1, id_agente = id_agente, idmaster = idmaster)
         
         for dado_chat in dados:      
             arr_mensagens.append({
                 "role": dado_chat.get_autor_display(), 
                 "content": dado_chat.mensagem
-            })    
+            })  
             
+            
+    def enviar_para_openai(self, model, arr_mensagens):
+        """
+            Envia as mensagens para a API do OpenAI e retorna a resposta.
+        """
         response = openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=arr_mensagens
-        )      
-        
-        # Criar historico do chat
-        data['autor'] = 1
-        data['mensagem'] = response.choices[0].message.content        
-        Chat.objects.create(id_agente=instancia_agente, **data)
-
-        # Pular primeira linha, para nao enviar a instrucao do agente
-        return Response(arr_mensagens[1:])
+            model = model,
+            messages = arr_mensagens
+        )
+        return response

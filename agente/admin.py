@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Agente, Instrucao, PermissaoAgenteEmpresa
+from .models import Agente, Instrucao, PermissaoAgenteEmpresa, baseConhecimento
 
 
 @admin.register(Agente)
@@ -8,10 +8,15 @@ class AgentesAdmin(admin.ModelAdmin):
     
 
 @admin.register(Instrucao)
-class InstrucaosAdmin(admin.ModelAdmin):
+class InstrucaoAdmin(admin.ModelAdmin):
     list_display = ('id_agente', 'instrucao', 'created_at')
-    
+ 
 
 @admin.register(PermissaoAgenteEmpresa)
 class PermissaoAgenteEmpresaAdmin(admin.ModelAdmin):
     list_display = ('id_agente', 'id_empresa')
+    
+    
+@admin.register(baseConhecimento)
+class baseConhecimentoAdmin(admin.ModelAdmin):
+    list_display = ('id_agente', 'arquivo')
