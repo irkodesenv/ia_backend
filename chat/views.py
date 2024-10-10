@@ -10,7 +10,9 @@ import openai
 from agente.models import Agente, Instrucao, baseConhecimento
 from central.settings import API_OPENIA_KEY, MEDIA_ROOT
 from docx import Document
+from utilitarios.views import querydict_to_dict
 import os
+import pandas as pd
 
 openai.api_key = API_OPENIA_KEY
 
@@ -66,12 +68,20 @@ class ChatViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='enviarPergunta')
     def enviar_pergunta(self, request):
-        data = request.data
+        data = querydict_to_dict(request.data.copy())
+        arquivo = request.FILES.get('arquivo')
         data_id_agente = data.get('id_agente', '')
         idmaster = data.get('idmaster')
         instancia_agente = get_object_or_404(Agente, idmaster = data_id_agente)
-        data.pop('id_agente', None)        
+        data.pop('id_agente', None) 
+        data.pop('arquivo', None)        
         arr_mensagens = []    
+        
+        if arquivo:
+            df = pd.read_excel(arquivo)
+            #print(df)
+            texto_extraido = f'Arquivo: {arquivo} informações extraídas do arquivo: {df}' 
+            self.alimenta_contexto(arr_mensagens, "system", texto_extraido)
         
         # Busca base de conhecimento
         base_conhecimento = self.obter_base_conhecimento_agente(data_id_agente)        
@@ -93,10 +103,11 @@ class ChatViewSet(viewsets.ModelViewSet):
             
         # Send
         response = self.enviar_para_openai("gpt-4o-mini", arr_mensagens)
-        
+
         self.alimenta_resposta_do_gpt(response, instancia_agente, **data)    
 
         #Pular primeira linha, para nao enviar a instrucao do agente
+
         return Response(arr_mensagens[1:])
     
     

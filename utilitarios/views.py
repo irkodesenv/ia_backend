@@ -242,3 +242,7 @@ def data_range_ano_parametro(ano):
     dt_fim = datetime.strptime(ano + "/12/31", "%Y/%m/%d")
 
     return [ dt_ini.strftime("%Y-%m-%d"), dt_fim.strftime("%Y-%m-%d") ]
+
+
+def querydict_to_dict(querydict):
+    return {chave: querydict.getlist(chave)[0] if querydict.getlist(chave) else '' for chave in querydict.keys()}
