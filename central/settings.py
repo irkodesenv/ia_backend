@@ -9,7 +9,9 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 API_OPENIA_KEY = config('API_OPENIA_IRKO')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '10.11.100.122'
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -93,7 +95,8 @@ MEDIA_ROOT = BASE_DIR / 'upload/media'
 MEDIA_URL = '/upload/media/'
 
 # Determina se o cookie CSRF deve ser enviado apenas por conexões HTTPS seguras
-CSRF_COOKIE_SECURE = config('COOKIE_SECURE', default=True, cast=bool)
+#CSRF_COOKIE_SECURE = config('COOKIE_SECURE', default=True, cast=bool)
+CSRF_COOKIE_SECURE = False
 
 # Define se o cookie CSRF deve ser acessível apenas pelo servidor e não deve ser acessível via JavaScript no navegador ( Permitir React )
 CSRF_COOKIE_HTTPONLY = False
@@ -110,13 +113,16 @@ CORS_ALLOW_ALL_ORIGINS = False
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',  # URL do frontend React
     'http://127.0.0.1:3000'
+    'http://10.11.100.122',
+    'http://10.11.100.122:8010'
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # URL do frontend React
-    'http://127.0.0.1:3000'
+    'http://127.0.0.1:3000',
+    'http://10.11.100.122',
+    'http://10.11.100.122:8010'
 ]
-
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
