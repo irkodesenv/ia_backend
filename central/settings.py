@@ -101,6 +101,8 @@ CSRF_COOKIE_HTTPONLY = False
 # Permite que cookies e credenciais sejam enviados com as solicitações entre diferentes origens (CORS).
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_HEADERS = ['content-type', 'x-csrftoken']
+
 # Permite qualquer origem
 CORS_ALLOW_ALL_ORIGINS = False  
 
@@ -114,5 +116,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # URL do frontend React
     'http://127.0.0.1:3000'
 ]
+
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
