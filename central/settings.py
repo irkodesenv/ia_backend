@@ -1,5 +1,7 @@
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -11,6 +13,14 @@ API_OPENIA_KEY = config('API_OPENIA_IRKO')
 
 ALLOWED_HOSTS = []
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # URL do frontend React
+    "http://127.0.0.1:3000"
+]
+
+# Permite que cookies e credenciais sejam enviados com as solicitações entre diferentes origens (CORS).
+CORS_ALLOW_CREDENTIALS = True
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -19,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'accounts.apps.AccountsConfig',
     'agente.apps.AgenteConfig',
@@ -27,15 +38,16 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Deve ser colocado antes do CommonMiddleware
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',  # Middleware CSRF
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware'
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'central.urls'
 
@@ -93,29 +105,41 @@ MEDIA_ROOT = BASE_DIR / 'upload/media'
 MEDIA_URL = '/upload/media/'
 
 # Determina se o cookie CSRF deve ser enviado apenas por conexões HTTPS seguras
-CSRF_COOKIE_SECURE = config('COOKIE_SECURE', default=True, cast=bool)
+CSRF_COOKIE_SECURE = config('COOKIE_SECURE', default=False, cast=bool)
 
 # Define se o cookie CSRF deve ser acessível apenas pelo servidor e não deve ser acessível via JavaScript no navegador ( Permitir React )
 CSRF_COOKIE_HTTPONLY = False
 
-# Permite que cookies e credenciais sejam enviados com as solicitações entre diferentes origens (CORS).
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ['content-type', 'x-csrftoken', 'X-CSRFToken']
 
-CORS_ALLOW_HEADERS = ['content-type', 'x-csrftoken']
+CSRF_COOKIE_SAMESITE = 'Lax'  
 
 # Permite qualquer origem
-CORS_ALLOW_ALL_ORIGINS = False  
+#CORS_ALLOW_ALL_ORIGINS = False  
+
+
+# Configurar o JWT no Django Rest Framework
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# Configurações opcionais para o comportamento do token
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # Tempo de vida do token de acesso
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),    # Tempo de vida do token de refresh
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',  # URL do frontend React
-    'http://127.0.0.1:3000'
+    "http://localhost:3000",  # URL do frontend React
+    "http://127.0.0.1:3000"
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # URL do frontend React
-    'http://127.0.0.1:3000'
-]
+
 
 
 

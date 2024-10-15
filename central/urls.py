@@ -7,6 +7,11 @@ from accounts.urls import router_usuario
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
+from accounts.views import CustomTokenObtainPairView
+
+from rest_framework_simplejwt.views import (
+    TokenRefreshView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,6 +19,8 @@ urlpatterns = [
     path('api/v1/agente/', include(router_agente.urls)),
     path('api/v1/chat/', include(router_chat.urls)),
     path('api/v1/get_csrf_token/', views.get_csrf_token),
+    path('api/v1/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 
 if settings.DEBUG:
