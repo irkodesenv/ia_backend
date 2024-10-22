@@ -5,7 +5,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, Max
 import openai
 from agente.models import Agente, Instrucao, baseConhecimento
 from central.settings import API_OPENIA_KEY, MEDIA_ROOT
@@ -53,10 +53,17 @@ class ChatViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='listaChats')
     def retorna_agentes_distinct(self, request):
         # Subquery para obter o ID do chat mais recente para cada idmaster
+        #subquery = Chat.objects.filter(
+            #id_usuario=1, 
+            #idmaster=OuterRef('idmaster')
+        #).order_by('-created_at').values('id')[:1]
+        
         subquery = Chat.objects.filter(
             id_usuario=1, 
             idmaster=OuterRef('idmaster')
-        ).order_by('-created_at').values('id')[:1]
+        ).values('id').annotate(
+            last_created_at=Max('created_at')
+        ).values('id')[:1]
 
         # Consulta principal para obter os chats mais recentes
         distinct_chats = Chat.objects.filter(id__in=Subquery(subquery)).select_related('id_agente').order_by('-created_at')

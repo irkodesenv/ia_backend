@@ -12,12 +12,17 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 API_OPENIA_KEY = config('API_OPENIA_IRKO')
 
 ALLOWED_HOSTS = [
-    '10.11.100.122'
+    '10.11.100.122',
+    '127.0.0.1:8000',
+    '127.0.0.1',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # URL do frontend React
-    "http://127.0.0.1:3000"
+    "http://127.0.0.1:3000",
+    "127.0.0.1:8000"
 ]
 
 # Permite que cookies e credenciais sejam enviados com as solicitações entre diferentes origens (CORS).
